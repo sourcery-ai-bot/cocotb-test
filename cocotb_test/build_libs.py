@@ -164,6 +164,55 @@ def build_common_libs(build_dir, include_dir, share_lib_dir, dist):
     _build_lib(libsim, dist, build_dir)
 
 
+def build_vpi_lib(
+    build_dir,
+    include_dir,
+    share_lib_dir,
+    dist,
+    sim_define,
+    extra_lib=[],
+    extra_lib_dir=[],
+):
+    libvpi = Extension(
+        "libvpi",
+        define_macros=[("VPI_CHECKING", "1")] + [(sim_define, "")],
+        include_dirs=[include_dir],
+        libraries=["gpi", "gpilog"] + extra_lib,
+        library_dirs=[build_dir] + extra_lib_dir,
+        sources=[
+            os.path.join(share_lib_dir, "vpi", "VpiImpl.cpp"),
+            os.path.join(share_lib_dir, "vpi", "VpiCbHdl.cpp"),
+        ],
+        extra_link_args=["-Wl,-rpath,$ORIGIN"],
+    )
+    return _build_lib(libvpi, dist, build_dir)
+
+
+def build_vhpi_lib(
+    build_dir,
+    include_dir,
+    share_lib_dir,
+    dist,
+    sim_define,
+    extra_lib=[],
+    extra_lib_dir=[],
+):
+    libvhpi = Extension(
+        "libvhpi",
+        include_dirs=[include_dir],
+        define_macros=[("VHPI_CHECKING", 1)] + [(sim_define, "")],
+        libraries=["gpi", "gpilog", "stdc++"] + extra_lib,
+        library_dirs=[build_dir] + extra_lib_dir,
+        sources=[
+            os.path.join(share_lib_dir, "vhpi", "VhpiImpl.cpp"),
+            os.path.join(share_lib_dir, "vhpi", "VhpiCbHdl.cpp"),
+        ],
+        extra_link_args=["-Wl,-rpath,$ORIGIN"],
+    )
+
+    return _build_lib(libvhpi, dist, build_dir)
+
+
 def build_libs(build_dir="cocotb_build"):
 
     distutils.log.set_verbosity(0)  # Disable logging comiliation commands in disutils
@@ -253,12 +302,22 @@ def build_libs(build_dir="cocotb_build"):
             icarus_extra_lib_path = [os.path.join(icarus_path, "lib")]
 
     if icarus_compile:
-        build_vpi(
+        icarus_vpi_lib_name = build_vpi_lib(
             build_dir=icarus_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
             sim_define="ICARUS",
             extra_lib=icarus_extra_lib,
             extra_lib_dir=icarus_extra_lib_path,
         )
+
+        #build_vpi(
+        #    build_dir=icarus_build_dir,
+        #    sim_define="ICARUS",
+        #    extra_lib=icarus_extra_lib,
+        #    extra_lib_dir=icarus_extra_lib_path,
+        #)
 
         _rename_safe(os.path.join(icarus_build_dir, "libvpi." + ext_name), os.path.join(icarus_build_dir, "libvpi.vpl"))
 
