@@ -1,6 +1,5 @@
 #!/bin/env python3
 
-import argparse
 import os
 import sys
 import sysconfig
@@ -9,22 +8,14 @@ import errno
 import distutils
 import shutil
 import logging
-
-logger = logging.getLogger(__name__)
-
 import distutils.log
-
-distutils.log.set_verbosity(0)  # Disable logging comiliation commands in disutils
-# distutils.log.set_verbosity(distutils.log.DEBUG) # Set DEBUG level
 
 from setuptools import Extension
 from setuptools.dist import Distribution
-
-from xml.etree import cElementTree as ET
-import pytest
 from distutils.spawn import find_executable
-
 from setuptools.command.build_ext import build_ext as _build_ext
+
+logger = logging.getLogger(__name__)
 
 # Needed for Windows to not assume python module (generate interface in def file)
 class build_ext(_build_ext):
@@ -166,10 +157,10 @@ def build_common_libs(build_dir, include_dir, share_lib_dir, dist):
 
 
 def build_libs(build_dir="cocotb_build"):
-    """Call `_build_lib()` for all necessary libraries.
 
-    Some libraries are built only depending on the SIM environment variable."""
-
+    distutils.log.set_verbosity(0)  # Disable logging comiliation commands in disutils
+    # distutils.log.set_verbosity(distutils.log.DEBUG) # Set DEBUG level
+    
     cfg_vars = distutils.sysconfig.get_config_vars()
     for key, value in cfg_vars.items():
         if type(value) == str:
@@ -367,15 +358,3 @@ def build_libs(build_dir="cocotb_build"):
         build_vpi(build_dir=vcs_build_dir, sim_define="VERILATOR")
 
     return build_dir_abs, ext_name
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="""Compile cocotb libraries.""")
-    parser.add_argument(
-        "--build-dir",
-        # default = os.path.join(os.getcwd(), "cocotb_build"),
-        default="cocotb_build",
-        help="The directory to build the libraries into.",
-    )
-    args = parser.parse_args()
-    build_libs(build_dir=args.build_dir)
