@@ -218,7 +218,7 @@ def build_vhpi_lib(
     return _build_lib(libvhpi, dist, build_dir)
 
 
-def build_libs(build_dir="cocotb_build"):
+def build(build_dir="cocotb_build"):
 
     distutils.log.set_verbosity(0)  # Disable logging comiliation commands in disutils
     # distutils.log.set_verbosity(distutils.log.DEBUG) # Set DEBUG level

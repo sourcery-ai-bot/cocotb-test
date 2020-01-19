@@ -25,9 +25,9 @@ class PostInstallCommand(install):
         if not os.path.exists(lib_dir):
             os.makedirs(lib_dir)
 
-        from cocotb_test.build_libs import build_libs
+        from cocotb_test.build_libs import build
 
-        build_libs(build_dir=lib_dir)
+        build(build_dir=lib_dir)
 
 
 class PostDevelopCommand(develop):
@@ -40,9 +40,9 @@ class PostDevelopCommand(develop):
         if not os.path.exists(lib_dir):
             os.makedirs(lib_dir)
 
-        from cocotb_test.build_libs import build_libs
+        from cocotb_test.build_libs import build
 
-        build_libs(build_dir=lib_dir)
+        build(build_dir=lib_dir)
 
 
 # force platform specyfic wheel  (root_is_pure)
