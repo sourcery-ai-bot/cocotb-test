@@ -37,12 +37,13 @@ import shutil
 import logging
 import distutils.log
 
+logger = logging.getLogger(__name__)
+
 from setuptools import Extension
 from setuptools.dist import Distribution
 from distutils.spawn import find_executable
 from setuptools.command.build_ext import build_ext as _build_ext
 
-logger = logging.getLogger(__name__)
 
 # Needed for Windows to not assume python module (generate interface in def file)
 class build_ext(_build_ext):
