@@ -40,7 +40,6 @@ import distutils.log
 from setuptools import Extension
 from setuptools.dist import Distribution
 
-from xml.etree import cElementTree as ET	
 import pytest
 
 from distutils.spawn import find_executable
