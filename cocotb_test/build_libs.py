@@ -233,60 +233,12 @@ def build_libs(build_dir="cocotb_build"):
     share_lib_dir = os.path.join(share_dir, "lib")
     # build_dir_abs = os.path.join(os.getcwd(), build_dir)
     build_dir = os.path.abspath(build_dir)
-
-    ld_library = sysconfig.get_config_var("LDLIBRARY")
-    if ld_library:
-        python_lib_link = os.path.splitext(ld_library)[0][3:]
-    else:
-        python_version = sysconfig.get_python_version().replace(".", "")
-        python_lib_link = "python" + python_version
-
-    if os.name == "nt":
-        ext_name = "dll"
-        python_lib = python_lib_link + "." + ext_name
-    else:
-        ext_name = "so"
-        python_lib = "lib" + python_lib_link + "." + ext_name
-
     include_dir = os.path.join(share_dir, "include")
 
     dist = Distribution()
     dist.parse_config_files()
 
-    def build_vpi(build_dir, sim_define, extra_lib=[], extra_lib_dir=[]):
-        build_common_libs(build_dir, include_dir, share_lib_dir, dist)
-        libvpi = Extension(
-            "libvpi",
-            define_macros=[("VPI_CHECKING", "1")] + [(sim_define, "")],
-            include_dirs=[include_dir],
-            libraries=["gpi", "gpilog"] + extra_lib,
-            library_dirs=[build_dir] + extra_lib_dir,
-            sources=[
-                os.path.join(share_lib_dir, "vpi", "VpiImpl.cpp"),
-                os.path.join(share_lib_dir, "vpi", "VpiCbHdl.cpp"),
-            ],
-            extra_link_args=["-Wl,-rpath,$ORIGIN"],
-        )
-
-        _build_lib(libvpi, dist, build_dir)
-
-    def build_vhpi(build_dir, sim_define, extra_lib=[], extra_lib_dir=[]):
-        libvhpi = Extension(
-            "libvhpi",
-            include_dirs=[include_dir],
-            define_macros=[("VHPI_CHECKING", 1)] + [(sim_define, "")],
-            libraries=["gpi", "gpilog", "stdc++"] + extra_lib,
-            library_dirs=[build_dir] + extra_lib_dir,
-            sources=[
-                os.path.join(share_lib_dir, "vhpi", "VhpiImpl.cpp"),
-                os.path.join(share_lib_dir, "vhpi", "VhpiCbHdl.cpp"),
-            ],
-            extra_link_args=["-Wl,-rpath,$ORIGIN"],
-        )
-
-        _build_lib(libvhpi, dist, build_dir)
-
-     #
+    #
     #  Icarus Verilog
     #
     logger.warning("Compiling interface libraries for Icarus Verilog ...")
