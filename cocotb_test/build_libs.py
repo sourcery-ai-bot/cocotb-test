@@ -41,6 +41,10 @@ logger = logging.getLogger(__name__)
 
 from setuptools import Extension
 from setuptools.dist import Distribution
+
+from xml.etree import cElementTree as ET	
+import pytest
+
 from distutils.spawn import find_executable
 from setuptools.command.build_ext import build_ext as _build_ext
 
