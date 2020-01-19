@@ -87,6 +87,83 @@ def _build_lib(lib, dist, build_dir):
 
     return dir_name, ext_name
 
+def build_common_libs(build_dir, include_dir, share_lib_dir, dist):
+
+    ld_library = sysconfig.get_config_var("LDLIBRARY")
+    if ld_library:
+        python_lib_link = os.path.splitext(ld_library)[0][3:]
+    else:
+        python_version = sysconfig.get_python_version().replace(".", "")
+        python_lib_link = "python" + python_version
+
+    if os.name == "nt":
+        ext_name = "dll"
+        python_lib = python_lib_link + "." + ext_name
+    else:
+        ext_name = "so"
+        python_lib = "lib" + python_lib_link + "." + ext_name
+
+    libcocotbutils = Extension(
+        "libcocotbutils",
+        include_dirs=[include_dir],
+        sources=[os.path.join(share_lib_dir, "utils", "cocotb_utils.c")],
+        extra_link_args=["-Wl,-rpath,$ORIGIN"],
+    )
+
+    _build_lib(libcocotbutils, dist, build_dir)
+
+    gpilog_ex_link_args = []
+    if sys.platform == "darwin":
+        gpilog_ex_link_args = ["-Wl,-rpath," + sysconfig.get_config_var("LIBDIR")]
+
+    libgpilog = Extension(
+        "libgpilog",
+        include_dirs=[include_dir],
+        libraries=[python_lib_link, "pthread", "m", "cocotbutils"],
+        library_dirs=[build_dir],
+        sources=[os.path.join(share_lib_dir, "gpi_log", "gpi_logging.c")],
+        extra_link_args=gpilog_ex_link_args,
+    )
+
+    _build_lib(libgpilog, dist, build_dir)
+
+    libcocotb = Extension(
+        "libcocotb",
+        define_macros=[("PYTHON_SO_LIB", python_lib)],
+        include_dirs=[include_dir],
+        library_dirs=[build_dir],
+        libraries=["gpilog", "cocotbutils"],
+        sources=[os.path.join(share_lib_dir, "embed", "gpi_embed.c")],
+        extra_link_args=["-Wl,-rpath,$ORIGIN"],
+    )
+
+    _build_lib(libcocotb, dist, build_dir)
+
+    libgpi = Extension(
+        "libgpi",
+        define_macros=[("LIB_EXT", ext_name), ("SINGLETON_HANDLES", "")],
+        include_dirs=[include_dir],
+        libraries=["cocotbutils", "gpilog", "cocotb", "stdc++"],
+        library_dirs=[build_dir],
+        sources=[
+            os.path.join(share_lib_dir, "gpi", "GpiCbHdl.cpp"),
+            os.path.join(share_lib_dir, "gpi", "GpiCommon.cpp"),
+        ],
+        extra_link_args=["-Wl,-rpath,$ORIGIN"],
+    )
+
+    _build_lib(libgpi, dist, build_dir)
+
+    libsim = Extension(
+        "simulator",
+        include_dirs=[include_dir],
+        libraries=["cocotbutils", "gpilog", "gpi"],
+        library_dirs=[build_dir],
+        sources=[os.path.join(share_lib_dir, "simulator", "simulatormodule.c")],
+    )
+
+    _build_lib(libsim, dist, build_dir)
+
 
 def build_libs(build_dir="cocotb_build"):
     """Call `_build_lib()` for all necessary libraries.
@@ -125,71 +202,8 @@ def build_libs(build_dir="cocotb_build"):
     dist = Distribution()
     dist.parse_config_files()
 
-    def build_libs_common(build_dir_abs):
-        libcocotbutils = Extension(
-            "libcocotbutils",
-            include_dirs=[include_dir],
-            sources=[os.path.join(share_lib_dir, "utils", "cocotb_utils.c")],
-            extra_link_args=["-Wl,-rpath,$ORIGIN"],
-        )
-
-        _build_lib(libcocotbutils, dist, build_dir_abs)
-
-        gpilog_ex_link_args = []
-        if sys.platform == "darwin":
-            gpilog_ex_link_args = ["-Wl,-rpath," + sysconfig.get_config_var("LIBDIR")]
-
-        libgpilog = Extension(
-            "libgpilog",
-            include_dirs=[include_dir],
-            libraries=[python_lib_link, "pthread", "m", "cocotbutils"],
-            library_dirs=[build_dir_abs],
-            sources=[os.path.join(share_lib_dir, "gpi_log", "gpi_logging.c")],
-            extra_link_args=gpilog_ex_link_args,
-        )
-
-        _build_lib(libgpilog, dist, build_dir_abs)
-
-        libcocotb = Extension(
-            "libcocotb",
-            define_macros=[("PYTHON_SO_LIB", python_lib)],
-            include_dirs=[include_dir],
-            library_dirs=[build_dir_abs],
-            libraries=["gpilog", "cocotbutils"],
-            sources=[os.path.join(share_lib_dir, "embed", "gpi_embed.c")],
-            extra_link_args=["-Wl,-rpath,$ORIGIN"],
-        )
-
-        _build_lib(libcocotb, dist, build_dir_abs)
-
-        libgpi = Extension(
-            "libgpi",
-            define_macros=[("LIB_EXT", ext_name), ("SINGLETON_HANDLES", "")],
-            include_dirs=[include_dir],
-            libraries=["cocotbutils", "gpilog", "cocotb", "stdc++"],
-            library_dirs=[build_dir_abs],
-            sources=[
-                os.path.join(share_lib_dir, "gpi", "GpiCbHdl.cpp"),
-                os.path.join(share_lib_dir, "gpi", "GpiCommon.cpp"),
-            ],
-            extra_link_args=["-Wl,-rpath,$ORIGIN"],
-        )
-
-        _build_lib(libgpi, dist, build_dir_abs)
-
-        libsim = Extension(
-            "simulator",
-            include_dirs=[include_dir],
-            libraries=["cocotbutils", "gpilog", "gpi"],
-            library_dirs=[build_dir_abs],
-            sources=[os.path.join(share_lib_dir, "simulator", "simulatormodule.c")],
-        )
-
-        _build_lib(libsim, dist, build_dir_abs)
-
     def build_vpi(build_dir, sim_define, extra_lib=[], extra_lib_dir=[]):
-        build_libs_common(build_dir)
-
+        build_common_libs(build_dir, include_dir, share_lib_dir, dist)
         libvpi = Extension(
             "libvpi",
             define_macros=[("VPI_CHECKING", "1")] + [(sim_define, "")],
