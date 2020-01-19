@@ -82,9 +82,12 @@ def _build_lib(lib, dist, build_dir):
 
     target = os.path.join(os.path.abspath(dir_name), lib_name + "." + ext_name)
     if target != lib_path:
-        _rename_safe(lib_path, os.path.join(os.path.abspath(dir_name), lib_name + "." + ext_name))
+        _rename_safe(
+            lib_path, os.path.join(os.path.abspath(dir_name), lib_name + "." + ext_name)
+        )
 
-    return dir_name, ext_name
+    return lib_name + "." + ext_name
+
 
 def build_common_libs(build_dir, include_dir, share_lib_dir, dist):
 
@@ -317,7 +320,7 @@ def build_libs(build_dir="cocotb_build"):
 
         _rename_safe(
             os.path.join(icarus_build_dir, icarus_vpi_lib_name),
-            os.path.join(icarus_build_dir, "gpivpi.vpl"),
+            os.path.join(icarus_build_dir, "libvpi.vpl"),
         )
 
     #
