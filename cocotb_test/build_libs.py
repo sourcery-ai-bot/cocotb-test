@@ -35,7 +35,6 @@ import errno
 import distutils
 import shutil
 import logging
-import pytest
 
 from setuptools import Extension
 from setuptools.dist import Distribution
