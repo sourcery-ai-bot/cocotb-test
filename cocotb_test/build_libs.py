@@ -1,5 +1,5 @@
-#!/bin/env python3
 
+import argparse
 import os
 import sys
 import sysconfig
@@ -8,14 +8,22 @@ import errno
 import distutils
 import shutil
 import logging
+
+logger = logging.getLogger(__name__)
+
 import distutils.log
+
+distutils.log.set_verbosity(0)  # Disable logging comiliation commands in disutils
+# distutils.log.set_verbosity(distutils.log.DEBUG) # Set DEBUG level
 
 from setuptools import Extension
 from setuptools.dist import Distribution
-from distutils.spawn import find_executable
-from setuptools.command.build_ext import build_ext as _build_ext
 
-logger = logging.getLogger(__name__)
+from xml.etree import cElementTree as ET
+import pytest
+from distutils.spawn import find_executable
+
+from setuptools.command.build_ext import build_ext as _build_ext
 
 # Needed for Windows to not assume python module (generate interface in def file)
 class build_ext(_build_ext):
