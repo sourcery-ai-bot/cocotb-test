@@ -283,18 +283,20 @@ def build_libs(build_dir="cocotb_build"):
 
         _build_lib(libvhpi, dist, build_dir)
 
-    #
+     #
     #  Icarus Verilog
     #
     logger.warning("Compiling interface libraries for Icarus Verilog ...")
-    icarus_build_dir = os.path.join(build_dir_abs, "icarus")
+    icarus_build_dir = os.path.join(build_dir, "icarus")
     icarus_compile = True
     icarus_extra_lib = []
     icarus_extra_lib_path = []
     if os.name == "nt":
         iverilog_path = find_executable("iverilog")
         if iverilog_path is None:
-            logger.warning("Icarus Verilog executable not found. VPI interface will not be avaliable.")
+            logger.warning(
+                "Icarus Verilog executable not found. VPI interface will not be avaliable."
+            )
             icarus_compile = False
         else:
             icarus_path = os.path.dirname(os.path.dirname(iverilog_path))
@@ -313,51 +315,56 @@ def build_libs(build_dir="cocotb_build"):
             extra_lib_dir=icarus_extra_lib_path,
         )
 
-        #build_vpi(
-        #    build_dir=icarus_build_dir,
-        #    sim_define="ICARUS",
-        #    extra_lib=icarus_extra_lib,
-        #    extra_lib_dir=icarus_extra_lib_path,
-        #)
-
-        _rename_safe(os.path.join(icarus_build_dir, "libvpi." + ext_name), os.path.join(icarus_build_dir, "libvpi.vpl"))
+        _rename_safe(
+            os.path.join(icarus_build_dir, icarus_vpi_lib_name),
+            os.path.join(icarus_build_dir, "gpivpi.vpl"),
+        )
 
     #
     #  Modelsim/Questa
     #
-    logger.warning("Compiling interface libraries for Questa ...")
+    logger.warning("Compiling interface libraries for Modelsim/Questa ...")
     vsim_path = find_executable("vopt")
-    questa_build_dir = os.path.join(build_dir_abs, "questa")
-    questa_compile = True
-    questa_extra_lib = []
-    questa_extra_lib_path = []
+    modelsim_build_dir = os.path.join(build_dir, "modelsi")
+    modelsim_compile = True
+    modelsim_extra_lib = []
+    modelsim_extra_lib_path = []
 
     if os.name == "nt":
         if vsim_path is None:
-            logger.warning("Questa executable (vopt) not found. VPI interface will not be avaliable.")
-            questa_compile = False
+            logger.warning(
+                "Modelsim/Questa executable (vopt) not found. VPI interface will not be avaliable."
+            )
+            modelsim_compile = False
         else:
-            questa_bin_dir = os.path.dirname(vsim_path)
-            questa_extra_lib = ["mtipli"]
-            questa_extra_lib_path = [questa_bin_dir]
+            modelsim_bin_dir = os.path.dirname(vsim_path)
+            modelsim_extra_lib = ["mtipli"]
+            modelsim_extra_lib_path = [modelsim_bin_dir]
 
-    if questa_compile:
-        build_vpi(
-            build_dir=questa_build_dir,
+    if modelsim_compile:
+        build_common_libs(modelsim_build_dir, include_dir, share_lib_dir, dist)
+
+        build_vpi_lib(
+            build_dir=modelsim_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
             sim_define="MODELSIM",
-            extra_lib=questa_extra_lib,
-            extra_lib_dir=questa_extra_lib_path,
+            extra_lib=modelsim_extra_lib,
+            extra_lib_dir=modelsim_extra_lib_path,
         )
 
     if vsim_path is None:
-        logger.warning("Questa executable (vopt) executable not found. FLI interface will not be avaliable.")
+        logger.warning(
+            "Modelsim/Questa executable (vopt) executable not found. FLI interface will not be avaliable."
+        )
     else:
-        questa_dir = os.path.dirname(os.path.dirname(vsim_path))
+        modelsim_dir = os.path.dirname(os.path.dirname(vsim_path))
         libfli = Extension(
             "libfli",
-            include_dirs=[include_dir, os.path.join(questa_dir, "include")],
-            libraries=["gpi", "gpilog", "stdc++"] + questa_extra_lib,
-            library_dirs=[questa_build_dir] + questa_extra_lib_path,
+            include_dirs=[include_dir, os.path.join(modelsim_dir, "include")],
+            libraries=["gpi", "gpilog", "stdc++"] + modelsim_extra_lib,
+            library_dirs=[modelsim_build_dir] + modelsim_extra_lib_path,
             sources=[
                 os.path.join(share_lib_dir, "fli", "FliImpl.cpp"),
                 os.path.join(share_lib_dir, "fli", "FliCbHdl.cpp"),
@@ -367,54 +374,106 @@ def build_libs(build_dir="cocotb_build"):
         )
 
         try:
-            _build_lib(libfli, dist, questa_build_dir)
-        except:
-            logger.warning("Building FLI intercae for Questa faild!")  # some Modelsim version doesn not include FLI?
+            _build_lib(libfli, dist, modelsim_build_dir)
+        except:  # noqa: E722
+            logger.warning(
+                "Building FLI intercae for Modelsim faild!"
+            )  # some Modelsim version doesn not include FLI?
 
     #
     # GHDL
     #
     if os.name == "posix":
         logger.warning("Compiling interface libraries for GHDL ...")
-        ghdl_build_dir = os.path.join(build_dir_abs, "ghdl")
-        build_vpi(build_dir=ghdl_build_dir, sim_define="GHDL")
+        ghdl_build_dir = os.path.join(build_dir, "ghdl")
+
+        build_common_libs(ghdl_build_dir, include_dir, share_lib_dir, dist)
+
+        build_vpi_lib(
+            build_dir=ghdl_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
+            sim_define="GHDL",
+        )
 
     #
     # IUS
     #
     if os.name == "posix":
         logger.warning("Compiling interface libraries for IUS ...")
-        ius_build_dir = os.path.join(build_dir_abs, "ius")
-        build_vpi(build_dir=ius_build_dir, sim_define="IUS")
-        build_vhpi(build_dir=ius_build_dir, sim_define="IUS")
+        ius_build_dir = os.path.join(build_dir, "ius")
+
+        build_common_libs(ius_build_dir, include_dir, share_lib_dir, dist)
+
+        build_vpi_lib(
+            build_dir=ius_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
+            sim_define="IUS",
+        )
+
+        build_vhpi_lib(
+            build_dir=ius_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
+            sim_define="IUS",
+        )
 
     #
     # VCS
     #
     if os.name == "posix":
         logger.warning("Compiling interface libraries for VCS ...")
-        vcs_build_dir = os.path.join(build_dir_abs, "vcs")
-        build_vpi(build_dir=vcs_build_dir, sim_define="VCS")
+        vcs_build_dir = os.path.join(build_dir, "vcs")
+
+        build_common_libs(vcs_build_dir, include_dir, share_lib_dir, dist)
+
+        build_vpi_lib(
+            build_dir=vcs_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
+            sim_define="VCS",
+        )
 
     #
     # Aldec
     #
     vsimsa_path = find_executable("vsimsa")
     if vsimsa_path is None:
-        logger.warning("Riviera executable not found. No VPI/VHPI interface will not be avaliable.")
+        logger.warning(
+            "Riviera executable not found. No VPI/VHPI interface will not be avaliable."
+        )
     else:
         logger.warning("Compiling interface libraries for Aldec ...")
-        aldec_build_dir = os.path.join(build_dir_abs, "aldec")
+        aldec_build_dir = os.path.join(build_dir, "aldec")
         aldec_path = os.path.dirname(vsimsa_path)
         aldec_extra_lib = ["aldecpli"]
         aldec_extra_lib_path = [aldec_path]
 
-        build_vpi(
-            build_dir=aldec_build_dir, sim_define="ALDEC", extra_lib=aldec_extra_lib, extra_lib_dir=aldec_extra_lib_path
+        build_common_libs(aldec_build_dir, include_dir, share_lib_dir, dist)
+
+        build_vpi_lib(
+            build_dir=aldec_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
+            sim_define="ALDEC",
+            extra_lib=aldec_extra_lib,
+            extra_lib_dir=aldec_extra_lib_path,
         )
 
-        build_vhpi(
-            build_dir=aldec_build_dir, sim_define="ALDEC", extra_lib=aldec_extra_lib, extra_lib_dir=aldec_extra_lib_path
+        build_vhpi_lib(
+            build_dir=aldec_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
+            sim_define="ALDEC",
+            extra_lib=aldec_extra_lib,
+            extra_lib_dir=aldec_extra_lib_path,
         )
 
     #
@@ -422,7 +481,16 @@ def build_libs(build_dir="cocotb_build"):
     #
     if os.name == "posix":
         logger.warning("Compiling interface libraries for Verilator ...")
-        vcs_build_dir = os.path.join(build_dir_abs, "verilator")
-        build_vpi(build_dir=vcs_build_dir, sim_define="VERILATOR")
+        vcs_build_dir = os.path.join(build_dir, "verilator")
 
-    return build_dir_abs, ext_name
+        build_common_libs(vcs_build_dir, include_dir, share_lib_dir, dist)
+
+        build_vpi_lib(
+            build_dir=vcs_build_dir,
+            include_dir=include_dir,
+            share_lib_dir=share_lib_dir,
+            dist=dist,
+            sim_define="VERILATOR",
+        )
+
+    return
