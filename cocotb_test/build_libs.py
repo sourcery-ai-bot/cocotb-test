@@ -229,7 +229,7 @@ def build_libs(build_dir="cocotb_build"):
     share_dir = os.path.join(os.path.dirname(cocotb.__file__), "share")
     share_lib_dir = os.path.join(share_dir, "lib")
     # build_dir_abs = os.path.join(os.getcwd(), build_dir)
-    build_dir_abs = os.path.abspath(build_dir)
+    build_dir = os.path.abspath(build_dir)
 
     ld_library = sysconfig.get_config_var("LDLIBRARY")
     if ld_library:
