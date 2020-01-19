@@ -45,7 +45,9 @@ def _rename_safe(target, link_name):
                 raise e
         return
 
-    if os.name == "nt":  # On Windows there is an issue with symlink and rename? !Workaround!
+    if (
+        os.name == "nt"
+    ):  # On Windows there is an issue with symlink and rename? !Workaround!
         shutil.copy2(target, link_name)
         return
 
@@ -220,7 +222,7 @@ def build_libs(build_dir="cocotb_build"):
 
     distutils.log.set_verbosity(0)  # Disable logging comiliation commands in disutils
     # distutils.log.set_verbosity(distutils.log.DEBUG) # Set DEBUG level
-    
+
     cfg_vars = distutils.sysconfig.get_config_vars()
     for key, value in cfg_vars.items():
         if type(value) == str:
@@ -231,7 +233,6 @@ def build_libs(build_dir="cocotb_build"):
 
     share_dir = os.path.join(os.path.dirname(cocotb.__file__), "share")
     share_lib_dir = os.path.join(share_dir, "lib")
-    # build_dir_abs = os.path.join(os.getcwd(), build_dir)
     build_dir = os.path.abspath(build_dir)
     include_dir = os.path.join(share_dir, "include")
 
@@ -272,7 +273,7 @@ def build_libs(build_dir="cocotb_build"):
 
         _rename_safe(
             os.path.join(icarus_build_dir, icarus_vpi_lib_name),
-            os.path.join(icarus_build_dir, "libvpi.vpl"),
+            os.path.join(icarus_build_dir, "gpivpi.vpl"),
         )
 
     #
