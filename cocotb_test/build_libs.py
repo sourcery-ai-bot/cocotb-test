@@ -302,6 +302,7 @@ def build_libs(build_dir="cocotb_build"):
             icarus_extra_lib_path = [os.path.join(icarus_path, "lib")]
 
     if icarus_compile:
+        build_common_libs(icarus_build_dir, include_dir, share_lib_dir, dist)
         icarus_vpi_lib_name = build_vpi_lib(
             build_dir=icarus_build_dir,
             include_dir=include_dir,
