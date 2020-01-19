@@ -36,12 +36,10 @@ import distutils
 import shutil
 import logging
 import distutils.log
+import pytest
 
 from setuptools import Extension
 from setuptools.dist import Distribution
-
-import pytest
-
 from distutils.spawn import find_executable
 from setuptools.command.build_ext import build_ext as _build_ext
 
